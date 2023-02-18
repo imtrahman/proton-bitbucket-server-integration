@@ -1,5 +1,5 @@
-# CodePipeline Integration with Bitbucket Server
-This blog post presents a solution to integrate the AWS CodePipeline with Bitbucket Server. If you want to integrate with Bitbucket Cloud, consult this [post](https://aws.amazon.com/blogs/devops/integrating-git-with-aws-codepipeline/). The Lambda Function provided can get the source code from a Bitbucket Server repository whenever the user sends a new code push and store it in a designed S3 bucket.
+# Proton Integration with Bitbucket Server
+This post presents a solution to integrate the AWS Proton with Bitbucket Server. If you want to integrate with Bitbucket Cloud, consult this [post](https://aws.amazon.com/blogs/devops/integrating-git-with-aws-codepipeline/). The Lambda Function provided can get the source code from a Bitbucket Server repository whenever the user sends a new code push and store it in a designed S3 bucket.
 
 The Bitbucket Server integration is performed by using webhooks configured in the Bitbucket repository. Webhooks are ideal for this case, and it avoids the need for performing frequent pooling to check for changes in the repository.
 
@@ -18,8 +18,6 @@ The figure below shows how the integration works. During the creation of the Clo
 1. The API Gateway or ELB forwards the request to the Lambda Function, which checks the message signature using the **secret** configured in the webhook. If the signature is valid, then the Lambda Function moves to the next step.
 1. The Lambda Function calls the Bitbucket server API and requests it to generate a ZIP package with the content of the branch modified by the user in step 1. 
 1. The Lambda Function sends the ZIP package to the S3 bucket.
-1. The CodePipeline is triggered when it detected a new or updated file in the S3 bucket path.
-
 
 ## Requirements
 * Before starting the solution setup, make sure you have an S3 bucket available to store the Lambda Function setup files.
@@ -42,7 +40,7 @@ In this step, you upload the Lambda Function and Lambda Layer zip files to an S3
 
 #### Clone the Git repository containing the solution source code
 ```bash
-git clone https://github.com/aws-samples/aws-codepipeline-bitbucket-integration.git
+git clone https://github.com/imtrahman/proton-bitbucket-server-integration.git
 ```
 
 #### Install the NodeJS packages with npm
@@ -84,6 +82,7 @@ aws cloudformation create-stack --stack-name CodePipeline-Bitbucket-Integration 
 ```
 
 ### Create a webhook on the Bitbucket Server
+
 Now you create the webhook on Bitbucket server to notify the Lambda Function of push events to the repository.
 
 1. Log into the Bitbucket server and navigate to the repository page. 
@@ -97,7 +96,7 @@ Now you create the webhook on Bitbucket server to notify the Lambda Function of 
 1. Click on the button **Create** to finish.
 1. Repeat these steps for each repository that you want to enable the integration.
 
-### Configure your pipeline
+### Configure AWS Proton
 Lastly, change your pipeline on AWS CodePipelinen to use the S3 bucket created by the Cloudformation stack as the source of your pipeline.
 
 The Lambda Function uploads the files to the S3 bucket using the following path structure:
@@ -106,4 +105,4 @@ Project Name/Repository Name/Branch Name.zip
 Now every time someone pushes code to the Bitbucket repository, your pipeline starts automatically.
 
 ## Conclusion
-In this post you learned how to integrate your Bitbucket Server with AWS CodePipeline.
+In this post you learned how to integrate your Bitbucket Server with AWS Proton.
