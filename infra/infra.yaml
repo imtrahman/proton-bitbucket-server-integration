@@ -69,7 +69,8 @@ Resources:
     Properties:
       Action: lambda:InvokeFunction
       FunctionName:
-        Ref: S3ProcessorFunction
+        Ref: ProtonEnvS3ProcessorFunction
+        Ref: ProtonSvcS3ProcessorFunction
       Principal: s3.amazonaws.com
       SourceAccount:
         Ref: AWS::AccountId
@@ -80,7 +81,7 @@ Resources:
     Properties:
       Code:
         S3Bucket: imnr-bitbucket-integration
-        S3Key: a457cefa83ed2cfa9ba9cde603415635
+        S3Key: ef6d722cebce02aa49dc08dd075d2444
       Handler: app.handler
       MemorySize: 128
       Role:
@@ -100,7 +101,7 @@ Resources:
     Properties:
       Code:
         S3Bucket: imnr-bitbucket-integration
-        S3Key: a457cefa83ed2cfa9ba9cde603415635
+        S3Key: f80824062facb51d20ee506e464655c6
       Handler: app.handler
       MemorySize: 128
       Role:
@@ -236,7 +237,7 @@ Resources:
       KmsKeyArn: !GetAtt KMSKey.Arn
       Role:
         !GetAtt IamRoleLambdaFunction.Arn
-      Code: ../code
+      Code: ../synccode
       Runtime: nodejs16.x
       Timeout: '30'
       VpcConfig:
