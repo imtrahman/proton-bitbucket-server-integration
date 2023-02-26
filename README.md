@@ -57,7 +57,7 @@ cd ProtonEnvS3ProcessorCode/dependencies/
 npm install
 cd ..
 sam package --s3-bucket <bucket name to upload lambda function>
-
+```
 Repeat the same command for ProtonSvcS3ProcessorCode, 
 
 Note down the s3 bucket name and key name from the output yaml you will get from the sam package command.
