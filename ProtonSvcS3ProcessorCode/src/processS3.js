@@ -6,6 +6,7 @@
 
 const { compareS3 } = require('./compareS3')
 const { deleteS3 } = require('./deleteS3')
+const { protonsvc } = require('./protonsvc')
 
 const AWS = require('aws-sdk')
 AWS.config.region = process.env.AWS_REGION
@@ -23,6 +24,17 @@ const processS3 = async (record) => {
       Bucket: record.s3.bucket.name,
       Prefix: Key
     }).promise()
+
+  const cparam = {
+   Bucket: record.s3.bucket.name,
+   Key: Key
+  }
+  const metaData = await s3.headObject(cparam).promise();
+  console.log ('Showing Meta data')
+  console.log(metaData)
+  let commitID;
+  let commitHash = metaData.Metadata.commithash
+
 
     console.log (JSON.stringify(data, null, 2))
     
@@ -47,14 +59,13 @@ const processS3 = async (record) => {
     
    let majorVersion;
    var path = require("path");
-   let commitHash;
-   let commitID;
+   commitID = commitHash.slice(0,7);
+
     if(isMinorVersion) {
     majorVersion = hversion
-    commitHash = path.basename(Key, '.tar.gz'); 
-    commitID = commitHash.slice(0,7)
     }
-    console.log(commitID)
+    
+	console.log(commitID)
     
     var params = {
     source: { /* required */
@@ -63,13 +74,29 @@ const processS3 = async (record) => {
       key: Key
     }
   },
-  templateName: process.env.PROTON_TEMPLATE, 
+
+  templateName: process.env.PROTON_SVC_TEMPLATE,
   description: `Syncing Commit Hash - [${commitID}]`,
   majorVersion: majorVersion,
   };
-  let protonResponse= await proton.createServiceTemplateVersion(params).promise() 
-  console.log(protonResponse)  
-    
+
+  var createsvcvtemparams = {
+  name: process.env.PROTON_SVC_TEMPLATE, /* required */
+  description: process.env.PROTON_SVC_TEMPLATE,
+  displayName: process.env.PROTON_SVC_TEMPLATE,
+   
+};
+
+  const isTemplateExist = await protonsvc(process.env.PROTON_ENV_TEMPLATE)
+  console.log(isTemplateExist)
+
+  if(isTemplateExist == process.env.PROTON_SVC_TEMPLATE){
+   let protonResponse = await proton.createServiceTemplateVersion(params).promise();
+    console.log(protonResponse)  
+  }else {
+   let protonResponse = await proton.createServiceTemplate(createsvcvtemparams).promise();
+   console.log(protonResponse)
+  }
     
 
     // Only continue there are more versions that we should keep

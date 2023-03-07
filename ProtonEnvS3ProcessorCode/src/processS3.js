@@ -6,6 +6,7 @@
 
 const { compareS3 } = require('./compareS3')
 const { deleteS3 } = require('./deleteS3')
+const { protonenv } = require('./protonenv')
 
 const AWS = require('aws-sdk')
 AWS.config.region = process.env.AWS_REGION
@@ -17,19 +18,32 @@ const processS3 = async (record) => {
     // Decode URL-encoded key
     const Key = decodeURIComponent(record.s3.object.key.replace(/\+/g, " "))
     console.log(Key)
+    
 
     // Get the list of object versions
     const data = await s3.listObjectVersions({
       Bucket: record.s3.bucket.name,
       Prefix: Key
     }).promise()
+    
+  const cparam = {
+   Bucket: record.s3.bucket.name,
+   Key: Key
+  }
+  const metaData = await s3.headObject(cparam).promise();
+  console.log ('Showing Meta data')
+  console.log(metaData)
+  let commitID;
+  let commitHash = metaData.Metadata.commithash
+    
 
     console.log (JSON.stringify(data, null, 2))
+
     
    // Sort versions by date (ascending by LastModified)
     const versions = data.Versions
     const sortedVersions = versions.sort((a,b) => new Date(a.LastModified) - new Date(b.LastModified))
-
+    
     // Add version number
     for (let i = 0; i < sortedVersions.length; i++) {
       sortedVersions[i].VersionNumber = i + 1
@@ -44,32 +58,48 @@ const processS3 = async (record) => {
     console.log('isMajorVersion: ', !isMinorVersion)
     console.log(hversion)
     
-    
-   let majorVersion;
-   var path = require("path");
-   let commitHash;
-   let commitID;
-    if(isMinorVersion) {
+    let majorVersion;
+   
+    var path = require("path");
+   
+   commitID = commitHash.slice(0,7);
+  
+   if(isMinorVersion) {
     majorVersion = hversion
-    commitHash = path.basename(Key, '.tar.gz'); 
-    commitID = commitHash.slice(0,7)
     }
     console.log(commitID)
-    
+  
     var params = {
     source: { /* required */
     s3: {
       bucket: record.s3.bucket.name, 
       key: Key
     }
-  },
-  templateName: process.env.PROTON_TEMPLATE, 
+   },
+  templateName: process.env.PROTON_ENV_TEMPLATE, 
   description: `Syncing Commit Hash - [${commitID}]`,
   majorVersion: majorVersion,
   };
-  let protonResponse= await proton.createEnvironmentTemplateVersion(params).promise() 
-  console.log(protonResponse)  
-    
+  
+  
+  var createenvtemparams = {
+  name: process.env.PROTON_ENV_TEMPLATE, /* required */
+  description: process.env.PROTON_ENV_TEMPLATE,
+  displayName: process.env.PROTON_ENV_TEMPLATE,
+   
+};
+
+const isTemplateExist = await protonenv(process.env.PROTON_ENV_TEMPLATE)
+
+ console.log(isTemplateExist)
+  
+  if(isTemplateExist == process.env.PROTON_ENV_TEMPLATE){
+   let protonResponse = await proton.createEnvironmentTemplateVersion(params).promise();
+    console.log(protonResponse)  
+  }else {
+   let protonResponse = await proton.createEnvironmentTemplate(createenvtemparams).promise();
+   console.log(protonResponse)
+  }
     
 
     // Only continue there are more versions that we should keep
@@ -86,6 +116,3 @@ const processS3 = async (record) => {
 }
 
 module.exports = { processS3 }
-
-
-
